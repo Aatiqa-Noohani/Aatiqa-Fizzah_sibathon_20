@@ -1,89 +1,67 @@
 import pandas as pd
-from sklearn.linear_model import LinearRegression
 import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error, r2_score
+import joblib
 
-class EnergyAI:
-    def __init__(self, data_path):
-        """
-        Initializes the AI by loading the Household Power Consumption dataset.
-        Handles missing values marked as '?' and fixes date/time formats.
-        """
-        print(f"Loading dataset from: {data_path}...")
-        
-        # 1. Load data and treat '?' as NaN (Not a Number)
-        self.df = pd.read_csv(data_path, na_values='?', low_memory=False)
-        
-        # 2. Fill missing values using interpolation 
-        # (This estimates gaps based on surrounding values, ideal for time-series)
-        numeric_cols = ['Global_active_power', 'Global_reactive_power', 'Voltage', 
-                        'Global_intensity', 'Sub_metering_1', 'Sub_metering_2', 'Sub_metering_3']
-        self.df[numeric_cols] = self.df[numeric_cols].interpolate(method='linear')
-        
-        # 3. Pre-processing: Combine Date and Time for analysis
-        # Dayfirst=True is used because your dataset uses DD/MM/YYYY
-        self.df['datetime'] = pd.to_datetime(self.df['Date'] + ' ' + self.df['Time'], dayfirst=True)
-        
-        # Sort by time to ensure the forecast trend is accurate
-        self.df = self.df.sort_values('datetime').reset_index(drop=True)
+class EnergyPredictor:
+    def __init__(self):
+        self.model = RandomForestRegressor(n_estimators=100, random_state=42)
+        self.le_appliance = LabelEncoder()
+        self.le_season = LabelEncoder()
+        self.scaler = StandardScaler()
 
-    def get_forecast(self, window=1000):
-        """
-        AI to predict the next 10 minutes of usage using Linear Regression.
-        Uses the last 'window' of rows to find the most current trend.
-        """
-        # We focus on the most recent data points for short-term forecasting
-        recent_data = self.df.tail(window)
-        
-        X = np.array(range(len(recent_data))).reshape(-1, 1)
-        y = recent_data['Global_active_power'].values
-        
-        model = LinearRegression()
-        model.fit(X, y)
-        
-        # Predict the next 10 steps (minutes)
-        future_X = np.array(range(len(recent_data), len(recent_data) + 10)).reshape(-1, 1)
-        predictions = model.predict(future_X)
-        return predictions
+    def prepare_data(self, file_path):
+        # Load dataset
+        df = pd.read_csv(file_path)
 
-    def calculate_metrics(self):
-        """Calculates core dashboard metrics: Voltage, Consumption, and CO2 Savings"""
-        avg_voltage = self.df['Voltage'].mean()
-        total_power_kw = self.df['Global_active_power'].sum()
+        # Feature Engineering: Extract Hour from Time
+        df['Hour'] = pd.to_datetime(df['Time'], format='%H:%M').dt.hour
         
-        # Convert total power (minutes of kW) to kWh (kilowatt-hours)
-        total_kwh = total_power_kw / 60
-        
-        # Eco-impact logic: 1kWh approx 0.4kg CO2. Goal of 15% savings.
-        co2_saved = (total_kwh * 0.4) * 0.15 
-        
-        return {
-            "Average Voltage (V)": round(avg_voltage, 2),
-            "Total Consumption (kWh)": round(total_kwh, 2),
-            "Estimated CO2 Saved (kg)": round(co2_saved, 2)
-        }
+        # Encoding categorical variables
+        df['Appliance Type'] = self.le_appliance.fit_transform(df['Appliance Type'])
+        df['Season'] = self.le_season.fit_transform(df['Season'])
 
-# --- Execution Block ---
+        # Select Features and Target
+        # Features: Appliance, Temperature, Season, Household Size, Hour
+        X = df[['Appliance Type', 'Outdoor Temperature (°C)', 'Season', 'Household Size', 'Hour']]
+        y = df['Energy Consumption (kWh)']
+
+        return X, y
+
+    def train(self, X, y):
+        # Split data
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        
+        # Feature Scaling
+        X_train_scaled = self.scaler.fit_transform(X_train)
+        X_test_scaled = self.scaler.transform(X_test)
+
+        # Train Model
+        print("Training the Smart Energy Model...")
+        self.model.fit(X_train_scaled, y_train)
+
+        # Evaluation
+        predictions = self.model.predict(X_test_scaled)
+        mae = mean_absolute_error(y_test, predictions)
+        r2 = r2_score(y_test, predictions)
+        
+        print(f"Model Training Complete.")
+        print(f"Mean Absolute Error: {mae:.4f} kWh")
+        print(f"R2 Score: {r2:.4f}")
+
+    def save_model(self, model_path='energy_model.pkl', scaler_path='scaler.pkl'):
+        # Save the model and the scaler for future deployment
+        joblib.dump(self.model, model_path)
+        joblib.dump(self.scaler, scaler_path)
+        joblib.dump(self.le_appliance, 'le_appliance.pkl')
+        joblib.dump(self.le_season, 'le_season.pkl')
+        print("Models and encoders saved successfully.")
+
 if __name__ == "__main__":
-    # Ensure your CSV file is in the same folder as this script
-    FILE_NAME = 'household_power_consumption.csv'
-    
-    try:
-        # Initialize the AI
-        ai = EnergyAI(FILE_NAME)
-        
-        # Calculate Metrics
-        metrics = ai.calculate_metrics()
-        print("\n--- CORE METRICS ---")
-        for key, value in metrics.items():
-            print(f"{key}: {value}")
-            
-        # Get Forecast
-        forecast = ai.get_forecast()
-        print("\n--- 10-MINUTE POWER FORECAST (kW) ---")
-        for i, val in enumerate(forecast, 1):
-            print(f"Minute {i}: {val:.4f}")
-            
-    except FileNotFoundError:
-        print(f"Error: File '{FILE_NAME}' not found. Please check the file path.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    predictor = EnergyPredictor()
+    X, y = predictor.prepare_data('smart_home_energy_consumption_large.csv')
+    predictor.train(X, y)
+    predictor.save_model()

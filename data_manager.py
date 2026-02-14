@@ -180,4 +180,14 @@ class DataManager:
             'energy_kwh': round(energy_kwh, 2),
             'cost': round(cost, 2)
         }
+            def get_date_range(self):
+        """Get the date range of the dataset"""
+        if self.df is None:
+            return None, None
+        
+        return (
+            self.df[config.DATETIME_COL].min(),
+            self.df[config.DATETIME_COL].max()
+        )
+
     

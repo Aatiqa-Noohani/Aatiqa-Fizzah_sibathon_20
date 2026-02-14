@@ -243,3 +243,26 @@ class ChartGenerator:
         ax.grid(True, alpha=0.3, axis='y')
         
        
+ # Tight layout
+        plt.tight_layout()
+        
+        return fig
+    
+    def embed_chart_in_tkinter(self, figure, parent_widget):
+        """
+        Embed a matplotlib figure in a Tkinter widget
+        
+        Args:
+            figure: matplotlib Figure object
+            parent_widget: Tkinter parent widget
+            
+        Returns:
+            FigureCanvasTkAgg object
+        """
+        canvas = FigureCanvasTkAgg(figure, parent_widget)
+        canvas.draw()
+        return canvas
+    
+    def close_all_figures(self):
+        """Close all matplotlib figures to free memory"""
+        plt.close('all')

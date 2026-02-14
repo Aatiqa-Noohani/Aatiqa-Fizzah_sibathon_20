@@ -33,7 +33,7 @@ class EnergyPredictor:
             print("TRAINING ENERGY PREDICTION MODEL")
             print("="*50)
             
-            # Split data into training and testing sets
+            ### Split data into training and testing sets
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y, 
                 test_size=config.TRAINING_TEST_SPLIT, 
@@ -43,7 +43,7 @@ class EnergyPredictor:
             print(f"Training samples: {len(X_train)}")
             print(f"Testing samples: {len(X_test)}")
             
-            # Create and train the model
+            ###Create and train the model
             self.model = LinearRegression()
             self.model.fit(X_train, y_train)
             

@@ -1,12 +1,3 @@
-"""
-Data Manager Module
-Handles loading, processing, and managing energy consumption data
-"""
-
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-import config
 
 
 class DataManager:

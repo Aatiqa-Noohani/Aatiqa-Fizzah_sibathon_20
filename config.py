@@ -1,14 +1,4 @@
-"""
-Configuration file for Smart Energy Management System
-Contains all system settings and constants
-"""
 
-# File paths
-DATASET_FILE = 'dataset.csv'
-MODEL_FILE = 'energy_model.pkl'
-
-# Energy pricing (cost per kWh in currency units)
-ENERGY_COST_PER_KWH = 0.12
 
 # Device categories and their average consumption (in Watts)
 DEVICES = {

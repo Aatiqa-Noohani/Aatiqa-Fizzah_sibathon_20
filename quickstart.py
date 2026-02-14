@@ -40,9 +40,9 @@ except ImportError:
 
 try:
     import tkinter
-    print("   ✓ tkinter available")
+    print("   ✓ steamlit available")
 except ImportError:
-    print("   ✗ tkinter NOT available")
+    print("   ✗ steamlit NOT available")
     print("      Ubuntu/Debian: sudo apt-get install python3-tk")
     print("      MacOS/Windows: Should be pre-installed with Python")
 
@@ -51,7 +51,7 @@ print("   Command: python main.py")
 
 print("\n📋 File Checklist:")
 import os
-files = ['main.py', 'config.py', 'data_manager.py', 'predictor.py', 
+files = ['app.py', 'config.py', 'data_manager.py', 'predictor.py', 
          'chart_generator.py', 'dataset.csv', 'README.md']
 
 for file in files:

@@ -72,7 +72,7 @@ The project follows a modular design to separate data handling, logic, and prese
 <pre>
 <code>
 # Clone the repository
-git clone https://github.com/your-username/smart-energy-system.git
+git clone (https://github.com/Aatiqa-Noohani/Aatiqa-Fizzah_sibathon_20.git)
 
 # Install requirements
 pip install pandas numpy scikit-learn matplotlib streamlit
